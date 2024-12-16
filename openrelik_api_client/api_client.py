@@ -86,10 +86,6 @@ class APIClient:
         resumableIdentifier = uuid4().hex
         file_path = Path(file_path)
         resumableFilename = file_path.name
-        resumableRelativePath = ""
-        resumableTotalSize = 0
-        resumableCurrentChunkSize = 0
-        resumableChunkSize = 0
         if not file_path.exists():
             raise FileNotFoundError(f"File {file_path} not found.")
 
@@ -101,19 +97,13 @@ class APIClient:
                 params = {'resumableChunkNumber': str(resumableChunkNumber),
                           "resumableTotalChunks": str(resumableTotalChunks),
                           "resumableIdentifier": resumableIdentifier,
-                          "resumableRelativePath": resumableRelativePath,
-                          "resumableTotalSize": str(resumableTotalSize),
-                          "resumableChunkSize": str(resumableChunkSize),
-                          "resumableCurrentChunkSize": str(resumableCurrentChunkSize),
                           "resumableFilename": resumableFilename,
                           "folder_id": str(folder_id)}
                 m = MultipartEncoder(
                     {"file": (file_path.name, chunk, "application/octet-stream")})
                 headers = {"Content-Type": m.content_type}
-                print(headers)
                 r = self.session.post(f"{self.base_url}{endpoint}", headers=headers,
                                       data=m.to_string(), params=params)
-                print(r.text)
 
 
 class TokenRefreshSession(requests.Session):
