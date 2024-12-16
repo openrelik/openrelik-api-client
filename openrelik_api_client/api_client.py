@@ -11,9 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from uuid import uuid4
+from pathlib import Path
+import math
+import os
 import requests
 from requests.exceptions import RequestException
+from requests_toolbelt import MultipartEncoder
+
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmZThmMjkyYWViZDM0MjA3YjkyODYxOGQ5MmRmZThkMSIsImlhdCI6MTczNDM1NDEwNCwibmJmIjoxNzM0MzU0MTA0LCJleHAiOjE3MzQ5NTg5MDQsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODcxMCIsImF1ZCI6ImFwaS1jbGllbnQiLCJqdGkiOiIwZWRlOGQ3Mzc2ODE0ZTc1YThiZGQyNjIxZjM1NmFlNCIsInRva2VuX3R5cGUiOiJyZWZyZXNoIn0.YLLXm9LI4OlRTPEUuepXyxgjs3tGKEIvyk1fpD96tqQ"
 
 
 class APIClient:
@@ -65,6 +71,49 @@ class APIClient:
         """Sends a DELETE request to the specified API endpoint."""
         url = f"{self.base_url}{endpoint}"
         return self.session.delete(url, **kwargs)
+
+    def upload_file(self, file_path: str, folder_id: int):
+        """Uploads a file to the server.
+
+        Args:
+            file_data: File contents.
+            folder_id: OpenRelik folder identifier.
+        """
+        endpoint = "/files/upload"
+        chunk_size = 1024 * 1024*4  # 4MB
+        resumableTotalChunks = 0
+        resumableChunkNumber = 0
+        resumableIdentifier = uuid4().hex
+        file_path = Path(file_path)
+        resumableFilename = file_path.name
+        resumableRelativePath = ""
+        resumableTotalSize = 0
+        resumableCurrentChunkSize = 0
+        resumableChunkSize = 0
+        if not file_path.exists():
+            raise FileNotFoundError(f"File {file_path} not found.")
+
+        with open(file_path, "rb") as fh:
+            total_size = Path(file_path).stat().st_size
+            resumableTotalChunks = math.ceil(total_size / chunk_size)
+            while chunk := fh.read(chunk_size):
+                resumableChunkNumber += 1
+                params = {'resumableChunkNumber': str(resumableChunkNumber),
+                          "resumableTotalChunks": str(resumableTotalChunks),
+                          "resumableIdentifier": resumableIdentifier,
+                          "resumableRelativePath": resumableRelativePath,
+                          "resumableTotalSize": str(resumableTotalSize),
+                          "resumableChunkSize": str(resumableChunkSize),
+                          "resumableCurrentChunkSize": str(resumableCurrentChunkSize),
+                          "resumableFilename": resumableFilename,
+                          "folder_id": str(folder_id)}
+                m = MultipartEncoder(
+                    {"file": (file_path.name, chunk, "application/octet-stream")})
+                headers = {"Content-Type": m.content_type}
+                print(headers)
+                r = self.session.post(f"{self.base_url}{endpoint}", headers=headers,
+                                      data=m.to_string(), params=params)
+                print(r.text)
 
 
 class TokenRefreshSession(requests.Session):
@@ -121,3 +170,12 @@ class TokenRefreshSession(requests.Session):
         except RequestException as e:
             print(f"Failed to refresh token: {e}")
             return False
+
+
+def main():
+    c = APIClient("http://172.19.0.5:8710", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmZThmMjkyYWViZDM0MjA3YjkyODYxOGQ5MmRmZThkMSIsImlhdCI6MTczNDM1NDEwNCwibmJmIjoxNzM0MzU0MTA0LCJleHAiOjE3MzQ5NTg5MDQsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODcxMCIsImF1ZCI6ImFwaS1jbGllbnQiLCJqdGkiOiIwZWRlOGQ3Mzc2ODE0ZTc1YThiZGQyNjIxZjM1NmFlNCIsInRva2VuX3R5cGUiOiJyZWZyZXNoIn0.YLLXm9LI4OlRTPEUuepXyxgjs3tGKEIvyk1fpD96tqQ")
+    c.upload_file(
+        "/workspaces/openrelik-src/openrelik-api-client/openrelik_api_client/api_client.py", 1)
+
+
+main()
