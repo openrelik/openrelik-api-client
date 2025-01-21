@@ -83,12 +83,12 @@ class APIClient:
             str: The path to the downloaded file.
         """
         endpoint = f"{self.base_url}/files/{file_id}/download"
-        bytes_response, _ = self.get(endpoint)
+        response = self.get(endpoint)
         filename_prefix, extension = os.path.splitext(filename)
         file = tempfile.NamedTemporaryFile(
             mode="wb", prefix=f"{filename_prefix}", suffix=extension, delete=False
         )
-        file.write(bytes_response)
+        file.write(response.content)
         file.close()
         return file.name
 
