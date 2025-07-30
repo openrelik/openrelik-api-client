@@ -72,6 +72,25 @@ class WorkflowsAPI:
         if response.status_code == 200:
             return response.json()
 
+    def get_workflow_status(self, folder_id: int, workflow_id: int) -> dict[str, Any]:
+        """Retrieves a workflow status by ID.
+
+        Args:
+            folder_id: The ID of the folder where the workflow exists.
+            workflow_id: The ID of the workflow to retrieve.
+
+        Returns:
+            The workflow status data.
+
+         Raises:
+            HTTPError: If the API request failed.
+        """
+        endpoint = f"{self.folders_url}/{folder_id}/workflows/{workflow_id}/status"
+        response = self.api_client.session.get(endpoint)
+        response.raise_for_status()
+        if response.status_code == 200:
+            return response.json()
+
     def update_workflow(
         self, folder_id: int, workflow_id: int, workflow_data: dict
     ) -> dict[str, Any] | None:
