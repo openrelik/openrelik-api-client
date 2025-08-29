@@ -102,7 +102,7 @@ class TestTokenRefreshSession:
         mock_get.return_value = mock_response
 
         session = TokenRefreshSession("https://api.example.com", "test_api_key")
-        result = session._refresh_token()
+        result = session._refresh_token(requested_url="https://api.example.com/some/endpoint")
 
         assert result is True
         assert session.headers["x-openrelik-access-token"] == "new_token"
@@ -115,7 +115,7 @@ class TestTokenRefreshSession:
         mock_get.side_effect = RequestException("Connection error")
 
         session = TokenRefreshSession("https://api.example.com", "test_api_key")
-        result = session._refresh_token()
+        result = session._refresh_token(requested_url="https://api.example.com/some/endpoint")
 
         assert result is False
         mock_get.assert_called_once_with("https://api.example.com/auth/refresh")
