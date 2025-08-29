@@ -56,12 +56,11 @@ class FoldersAPI:
         Raises:
             HTTPError: If the API request failed.
         """
-        # Corrected: Use the passed folder_id in the endpoint URL
         endpoint = f"{self.api_client.base_url}/folders/{folder_id}/folders/"
         data = {"display_name": display_name}
         response = self.api_client.session.post(endpoint, json=data)
         response.raise_for_status()
-        # Corrected: assign to a different variable or use the return directly
+
         new_folder_id = None
         if response.status_code == 201:
             new_folder_id = response.json().get("id")
@@ -84,9 +83,7 @@ class FoldersAPI:
         response.raise_for_status()
         return response.status_code == 200
 
-    def update_folder(
-        self, folder_id: int, folder_data: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    def update_folder(self, folder_id: int, folder_data: dict[str, Any]) -> dict[str, Any] | None:
         """Updates an existing folder.
 
         Args:
