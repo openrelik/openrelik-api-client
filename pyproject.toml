@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "openrelik-api-client"
-version = "0.2.4"
+version = "0.3.0"
 description = "API client that automatically handles token refresh"
 authors = ["Johan Berggren <jberggren@gmail.com>"]
 readme = "README.md"
