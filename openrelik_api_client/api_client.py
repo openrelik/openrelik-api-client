@@ -94,6 +94,7 @@ class APIClient:
         """
         endpoint = f"{self.base_url}/files/{file_id}/download"
         response = self.session.get(endpoint)
+        response.raise_for_status()
         filename_prefix, extension = os.path.splitext(filename)
         file = tempfile.NamedTemporaryFile(
             mode="wb", prefix=f"{filename_prefix}", suffix=extension, delete=False
