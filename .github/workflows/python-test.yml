@@ -22,3 +22,7 @@ jobs:
     - name: Test with pytest - ${{ matrix.python-version }}
       run: |
         poetry run pytest --cov=. -v
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
