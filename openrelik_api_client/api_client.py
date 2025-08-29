@@ -216,17 +216,23 @@ class TokenRefreshSession(requests.Session):
         response = super().request(method, url, **kwargs)
 
         if response.status_code == 401:
-            if self._refresh_token():
+            if self._refresh_token(url):
                 # Retry the original request with the new token
                 response = super().request(method, url, **kwargs)
             else:
-                raise Exception("Token refresh failed")
+                raise RuntimeError("API key has expired")
 
         return response
 
-    def _refresh_token(self) -> bool:
+    def _refresh_token(self, requested_url: str) -> bool:
         """Refreshes the access token using the refresh token."""
         refresh_url = f"{self.api_server_url}/auth/refresh"
+
+        # If the original URL is the same as the refresh URL, do not attempt to refresh as this
+        # indicates a faulty or expired api key. This prevents an infinite loop of refresh attempts.
+        if requested_url == refresh_url:
+            return False
+
         try:
             response = self.get(refresh_url)
             response.raise_for_status()
