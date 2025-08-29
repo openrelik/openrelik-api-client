@@ -1,9 +1,22 @@
-import pytest
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from unittest.mock import MagicMock, patch
+
 from requests.exceptions import HTTPError
 
-from openrelik_api_client.api_client import APIClient
-from openrelik_api_client.api_client import TokenRefreshSession
+from openrelik_api_client.api_client import APIClient, TokenRefreshSession
 from openrelik_api_client.folders import FoldersAPI
 
 
@@ -32,8 +45,7 @@ class TestFoldersAPI:
 
         # Verify
         self.api_client.session.post.assert_called_once_with(
-            f"{self.api_client.base_url}/folders/",
-            json={"display_name": "Test Folder"}
+            f"{self.api_client.base_url}/folders/", json={"display_name": "Test Folder"}
         )
         mock_response.raise_for_status.assert_called_once()
         assert folder_id == 123
@@ -67,8 +79,7 @@ class TestFoldersAPI:
 
         # Verify
         self.api_client.session.post.assert_called_once_with(
-            f"{self.api_client.base_url}/folders/123/folders/",
-            json={"display_name": "Subfolder"}
+            f"{self.api_client.base_url}/folders/123/folders/", json={"display_name": "Subfolder"}
         )
         mock_response.raise_for_status.assert_called_once()
         assert folder_id == 456
@@ -125,8 +136,7 @@ class TestFoldersAPI:
         """Test update_folder method."""
         # Setup
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "id": 123, "display_name": "Updated Folder"}
+        mock_response.json.return_value = {"id": 123, "display_name": "Updated Folder"}
         self.api_client.session.patch.return_value = mock_response
 
         folder_data = {"display_name": "Updated Folder"}
@@ -136,8 +146,7 @@ class TestFoldersAPI:
 
         # Verify
         self.api_client.session.patch.assert_called_once_with(
-            f"{self.api_client.base_url}/folders/123",
-            json=folder_data
+            f"{self.api_client.base_url}/folders/123", json=folder_data
         )
         mock_response.raise_for_status.assert_called_once()
         assert result == {"id": 123, "display_name": "Updated Folder"}
@@ -183,9 +192,7 @@ class TestFoldersAPI:
 
         # Execute
         result = self.folders_api.share_folder(
-            folder_id=123,
-            user_names=["user1", "user2"],
-            user_role="editor"
+            folder_id=123, user_names=["user1", "user2"], user_role="editor"
         )
 
         # Verify
@@ -197,8 +204,8 @@ class TestFoldersAPI:
                 "group_ids": [],
                 "group_names": [],
                 "user_role": "editor",
-                "group_role": "viewer"  # Default
-            }
+                "group_role": "viewer",  # Default
+            },
         )
         assert result == {"result": "success"}
 
@@ -211,9 +218,7 @@ class TestFoldersAPI:
 
         # Execute
         result = self.folders_api.share_folder(
-            folder_id=123,
-            group_names=["group1", "group2"],
-            group_role="editor"
+            folder_id=123, group_names=["group1", "group2"], group_role="editor"
         )
 
         # Verify
@@ -225,8 +230,8 @@ class TestFoldersAPI:
                 "group_ids": [],
                 "group_names": ["group1", "group2"],
                 "user_role": "viewer",  # Default
-                "group_role": "editor"
-            }
+                "group_role": "editor",
+            },
         )
         assert result == {"result": "success"}
 
@@ -238,11 +243,7 @@ class TestFoldersAPI:
         self.api_client.session.post.return_value = mock_response
 
         # Execute
-        result = self.folders_api.share_folder(
-            folder_id=123,
-            user_ids=[1, 2],
-            group_ids=[3, 4]
-        )
+        result = self.folders_api.share_folder(folder_id=123, user_ids=[1, 2], group_ids=[3, 4])
 
         # Verify
         self.api_client.session.post.assert_called_once_with(
@@ -253,8 +254,8 @@ class TestFoldersAPI:
                 "group_ids": [3, 4],
                 "group_names": [],
                 "user_role": "viewer",  # Default
-                "group_role": "viewer"  # Default
-            }
+                "group_role": "viewer",  # Default
+            },
         )
         assert result == {"result": "success"}
 
@@ -267,14 +268,11 @@ class TestFoldersAPI:
         mock_api_response.text = '{"error": "Permission denied"}'
 
         http_error = HTTPError("API Error")
-        http_error.response = mock_api_response # Attach the mocked response to the error
+        http_error.response = mock_api_response  # Attach the mocked response to the error
         self.api_client.session.post.side_effect = http_error
 
-        with patch('builtins.print') as mock_print:
-            result = self.folders_api.share_folder(
-                folder_id=123,
-                user_names=["user1"]
-            )
+        with patch("builtins.print") as mock_print:
+            result = self.folders_api.share_folder(folder_id=123, user_names=["user1"])
 
         # Verify
         self.api_client.session.post.assert_called_once()
