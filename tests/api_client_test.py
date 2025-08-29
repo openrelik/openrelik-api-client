@@ -85,7 +85,7 @@ class TestTokenRefreshSession:
 
         session = TokenRefreshSession("https://api.example.com", "test_api_key")
 
-        with pytest.raises(Exception, match="Token refresh failed"):
+        with pytest.raises(Exception, match="API key has expired"):
             session.request("GET", "https://api.example.com/some/endpoint")
 
         mock_request.assert_called_once()
