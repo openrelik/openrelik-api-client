@@ -1,8 +1,22 @@
-import pytest
-from unittest.mock import MagicMock, patch
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-from openrelik_api_client.api_client import APIClient
-from openrelik_api_client.api_client import TokenRefreshSession
+from unittest.mock import MagicMock
+
+import pytest
+
+from openrelik_api_client.api_client import APIClient, TokenRefreshSession
 from openrelik_api_client.groups import GroupsAPI
 
 
@@ -28,16 +42,12 @@ class TestGroupsAPI:
         self.api_client.session.post.return_value = mock_response
 
         # Execute
-        result = self.groups_api.create_group(
-            "test_group", "Test group description")
+        result = self.groups_api.create_group("test_group", "Test group description")
 
         # Verify
         self.api_client.session.post.assert_called_once_with(
             f"{self.groups_api.groups_url}/",
-            json={
-                "name": "test_group",
-                "description": "Test group description"
-            }
+            json={"name": "test_group", "description": "Test group description"},
         )
         mock_response.raise_for_status.assert_called_once()
         assert result == {"id": 123, "name": "test_group"}
@@ -106,7 +116,7 @@ class TestGroupsAPI:
         mock_response.status_code = 200
         mock_response.json.return_value = [
             {"id": 1, "username": "user1"},
-            {"id": 2, "username": "user2"}
+            {"id": 2, "username": "user2"},
         ]
         self.api_client.session.get.return_value = mock_response
 
@@ -118,10 +128,7 @@ class TestGroupsAPI:
             f"{self.groups_api.groups_url}/test_group/users"
         )
         mock_response.raise_for_status.assert_called_once()
-        assert result == [
-            {"id": 1, "username": "user1"},
-            {"id": 2, "username": "user2"}
-        ]
+        assert result == [{"id": 1, "username": "user1"}, {"id": 2, "username": "user2"}]
 
     def test_list_group_members_failure(self):
         """Test list_group_members method when API returns non-200 status code."""
@@ -143,24 +150,16 @@ class TestGroupsAPI:
         # Setup
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = [
-            {"id": 1, "name": "group1"},
-            {"id": 2, "name": "group2"}
-        ]
+        mock_response.json.return_value = [{"id": 1, "name": "group1"}, {"id": 2, "name": "group2"}]
         self.api_client.session.get.return_value = mock_response
 
         # Execute
         result = self.groups_api.list_groups()
 
         # Verify
-        self.api_client.session.get.assert_called_once_with(
-            f"{self.groups_api.groups_url}/"
-        )
+        self.api_client.session.get.assert_called_once_with(f"{self.groups_api.groups_url}/")
         mock_response.raise_for_status.assert_called_once()
-        assert result == [
-            {"id": 1, "name": "group1"},
-            {"id": 2, "name": "group2"}
-        ]
+        assert result == [{"id": 1, "name": "group1"}, {"id": 2, "name": "group2"}]
 
     def test_list_groups_failure(self):
         """Test list_groups method when API returns non-200 status code."""
@@ -217,13 +216,11 @@ class TestGroupsAPI:
         self.api_client.session.post.return_value = mock_response
 
         # Execute
-        result = self.groups_api.add_users_to_group(
-            "test_group", ["user1", "user2"])
+        result = self.groups_api.add_users_to_group("test_group", ["user1", "user2"])
 
         # Verify
         self.api_client.session.post.assert_called_once_with(
-            f"{self.groups_api.groups_url}/test_group/users/",
-            json=["user1", "user2"]
+            f"{self.groups_api.groups_url}/test_group/users/", json=["user1", "user2"]
         )
         mock_response.raise_for_status.assert_called_once()
         assert result == ["user1", "user2"]
@@ -236,13 +233,11 @@ class TestGroupsAPI:
         self.api_client.session.delete.return_value = mock_response
 
         # Execute
-        result = self.groups_api.remove_users_from_group(
-            "test_group", ["user1", "user2"])
+        result = self.groups_api.remove_users_from_group("test_group", ["user1", "user2"])
 
         # Verify
         self.api_client.session.delete.assert_called_once_with(
-            f"{self.groups_api.groups_url}/test_group/users",
-            json=["user1", "user2"]
+            f"{self.groups_api.groups_url}/test_group/users", json=["user1", "user2"]
         )
         mock_response.raise_for_status.assert_called_once()
         assert result == ["user1", "user2"]

@@ -12,17 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
-import os
-import tempfile
-import time
-from pathlib import Path
+import warnings
 from typing import Any
-from uuid import uuid4
 
 import requests
 from requests.exceptions import RequestException
-from requests_toolbelt import MultipartEncoder
+
+from .configs import ConfigsAPI
+from .files import FilesAPI
 
 
 class APIClient:
@@ -76,112 +73,43 @@ class APIClient:
         return self.session.delete(url, **kwargs)
 
     def get_config(self) -> dict[str, Any]:
-        """Gets the current OpenRelik configuration."""
-        endpoint = f"{self.base_url}/config/system/"
-        response = self.session.get(endpoint)
-        response.raise_for_status()
-        return response.json()
+        """
+        DEPRECATED: Use configAPI.get_system_config() instead.
+        This method will be removed in a future version.
+        """
+        warnings.warn(
+            "The 'APIClient.get_config' method is deprecated. Please use 'configAPI.get_system_config()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        configs_api = ConfigsAPI(self)
+        return configs_api.get_system_config()
 
     def download_file(self, file_id: int, filename: str) -> str | None:
-        """Downloads a file from OpenRelik.
-
-        Args:
-            file_id: The ID of the file to download.
-            filename: The name of the file to download.
-
-        Returns:
-            str: The path to the downloaded file.
         """
-        endpoint = f"{self.base_url}/files/{file_id}/download"
-        response = self.session.get(endpoint)
-        response.raise_for_status()
-        filename_prefix, extension = os.path.splitext(filename)
-        file = tempfile.NamedTemporaryFile(
-            mode="wb", prefix=f"{filename_prefix}", suffix=extension, delete=False
+        DEPRECATED: Use filesAPI.download_file() instead.
+        This method will be removed in a future version.
+        """
+        warnings.warn(
+            "The 'APIClient.download_file' method is deprecated. Please use 'filesAPI.download_file()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
-        file.write(response.content)
-        file.close()
-        return file.name
+        files_api = FilesAPI(self)
+        return files_api.download_file(file_id, filename)
 
     def upload_file(self, file_path: str, folder_id: int) -> int | None:
-        """Uploads a file to the server.
-
-        Args:
-            file_path: File contents.
-            folder_id: An existing OpenRelik folder identifier.
-
-        Returns:
-            file_id of the uploaded file or None otherwise.
-
-        Raise:
-            FileNotFoundError: if file_path is not found.
         """
-        MAX_CHUNK_RETRIES = 10  # Maximum number of retries for chunk upload
-        CHUNK_RETRY_INTERVAL = 0.5  # seconds
-
-        file_id = None
-        response = None
-        endpoint = "/files/upload"
-        chunk_size = 10 * 1024 * 1024  # 10 MB
-        resumableTotalChunks = 0
-        resumableChunkNumber = 0
-        resumableIdentifier = uuid4().hex
-        file_path = Path(file_path)
-        resumableFilename = file_path.name
-        if not file_path.exists():
-            raise FileNotFoundError(f"File {file_path} not found.")
-
-        if folder_id:
-            response = self.session.get(f"{self.base_url}/folders/{folder_id}")
-            if response.status_code == 404:
-                return file_id
-
-        with open(file_path, "rb") as fh:
-            total_size = Path(file_path).stat().st_size
-            resumableTotalChunks = math.ceil(total_size / chunk_size)
-            while chunk := fh.read(chunk_size):
-                resumableChunkNumber += 1
-                retry_count = 0
-                while retry_count < MAX_CHUNK_RETRIES:
-                    params = {
-                        "resumableRelativePath": resumableFilename,
-                        "resumableTotalSize": total_size,
-                        "resumableCurrentChunkSize": len(chunk),
-                        "resumableChunkSize": chunk_size,
-                        "resumableChunkNumber": resumableChunkNumber,
-                        "resumableTotalChunks": resumableTotalChunks,
-                        "resumableIdentifier": resumableIdentifier,
-                        "resumableFilename": resumableFilename,
-                        "folder_id": folder_id,
-                    }
-                    encoder = MultipartEncoder(
-                        {"file": (file_path.name, chunk, "application/octet-stream")}
-                    )
-                    headers = {"Content-Type": encoder.content_type}
-                    response = self.session.post(
-                        f"{self.base_url}{endpoint}",
-                        headers=headers,
-                        data=encoder.to_string(),
-                        params=params,
-                    )
-                    if response.status_code == 200 or response.status_code == 201:
-                        # Success, move to the next chunk
-                        break
-                    elif response.status_code == 503:
-                        # Server has issue saving the chunk, retry the upload.
-                        retry_count += 1
-                        time.sleep(CHUNK_RETRY_INTERVAL)
-                    elif response.status_code == 429:
-                        # Rate limit exceeded, cancel the upload and raise an error.
-                        raise RuntimeError("Upload failed, maximum retries exceeded")
-                    else:
-                        # Other errors, cancel the upload and raise an error.
-                        raise RuntimeError("Upload failed")
-
-            if response and response.status_code == 201:
-                file_id = response.json().get("id")
-
-        return file_id
+        DEPRECATED: Use filesAPI.download_file() instead.
+        This method will be removed in a future version.
+        """
+        warnings.warn(
+            "The 'APIClient.upload_file' method is deprecated. Please use 'filesAPI.upload_file()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        files_api = FilesAPI(self)
+        return files_api.upload_file(file_path, folder_id)
 
 
 class TokenRefreshSession(requests.Session):
