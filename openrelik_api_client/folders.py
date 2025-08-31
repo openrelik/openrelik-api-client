@@ -22,6 +22,23 @@ class FoldersAPI:
         super().__init__()
         self.api_client = api_client
 
+    def list_folder(self, folder_id: int) -> list[dict[str, Any]]:
+        """List files in a folder.
+
+        Args:
+            folder_id: The ID of the folder to check.
+
+        Returns:
+            A list of dictionaries containing file metadata
+
+        Raises:
+            HTTPError: If the API request failed.
+        """
+        endpoint = f"{self.api_client.base_url}/folders/{folder_id}/files/"
+        response = self.api_client.session.get(endpoint)
+        response.raise_for_status()
+        return response.json()
+
     def create_root_folder(self, display_name: str) -> int | None:
         """Create a root folder.
 
