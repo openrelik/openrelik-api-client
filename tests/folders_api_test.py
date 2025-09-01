@@ -32,6 +32,26 @@ class TestFoldersAPI:
         """Test FoldersAPI initialization."""
         assert self.folders_api.api_client == self.api_client
 
+    def test_list_folder(self):
+        """Test list_folder method."""
+        # Setup
+        mock_response = MagicMock()
+        mock_response.json.return_value = [
+            {"id": 1, "name": "file1.txt"},
+            {"id": 2, "name": "file2.txt"},
+        ]
+        self.api_client.session.get.return_value = mock_response
+
+        # Execute
+        result = self.folders_api.list_folder(123)
+
+        # Verify
+        mock_response.raise_for_status.assert_called_once()
+        assert result == [{"id": 1, "name": "file1.txt"}, {"id": 2, "name": "file2.txt"}]
+        self.api_client.session.get.assert_called_once_with(
+            f"{self.api_client.base_url}/folders/123/files/"
+        )
+
     def test_create_root_folder(self):
         """Test create_root_folder method."""
         # Setup

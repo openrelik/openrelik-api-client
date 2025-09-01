@@ -162,3 +162,109 @@ class TestAPIClient:
         self.files_api.api_client.session.get.assert_called_once_with(
             "https://api.example.com/api/v1/folders/999"
         )
+
+    def test_get_file_metadata(self):
+        """Test get_file_metadata method."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "display_name": "test_file.txt",
+            "filesize": 12345,
+            "extension": ".txt",
+            "original_path": "/path/to/test_file.txt",
+            "magic_mime": "text/plain",
+            "hash_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        }
+        self.files_api.api_client.session.get.return_value = mock_response
+        result = self.files_api.get_file_metadata(123)
+
+        assert result == {
+            "display_name": "test_file.txt",
+            "filesize": 12345,
+            "extension": ".txt",
+            "original_path": "/path/to/test_file.txt",
+            "magic_mime": "text/plain",
+            "hash_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        }
+
+        self.files_api.api_client.session.get.assert_called_once_with(
+            "https://api.example.com/api/v1/files/123/"
+        )
+
+    def test_get_file_content_success(self):
+        """Test get_file_content method for successful content retrieval."""
+        mock_metadata_response = MagicMock()
+        mock_metadata_response.json.return_value = {"filesize": 1024}
+        mock_content_response = MagicMock()
+        mock_content_response.content = b"file content"
+        mock_content_response.raise_for_status = MagicMock()
+        self.files_api.api_client.session.get.side_effect = [
+            mock_metadata_response,
+            mock_content_response,
+        ]
+        result = self.files_api.get_file_content(123, max_file_size_bytes=2048, return_type="bytes")
+        assert result == b"file content"
+        assert self.files_api.api_client.session.get.call_count == 2
+        self.files_api.api_client.session.get.assert_any_call(
+            "https://api.example.com/api/v1/files/123/download_stream"
+        )
+        mock_content_response.raise_for_status.assert_called_once()
+
+    def test_get_file_content_too_large(self):
+        """Test get_file_content method when file is too large."""
+        mock_metadata_response = MagicMock()
+        mock_metadata_response.json.return_value = {"filesize": 10 * 1024 * 1024}
+        self.files_api.api_client.session.get.return_value = mock_metadata_response
+        with pytest.raises(RuntimeError, match="File too large to download"):
+            self.files_api.get_file_content(
+                123, max_file_size_bytes=5 * 1024 * 1024, return_type="bytes"
+            )
+
+    def test_get_file_content_invalid_return_type(self):
+        """Test get_file_content method with invalid return_type."""
+        mock_metadata_response = MagicMock()
+        mock_metadata_response.json.return_value = {"filesize": 1024}
+        mock_content_response = MagicMock()
+        mock_content_response.content = b"file content"
+        mock_content_response.raise_for_status = MagicMock()
+        self.files_api.api_client.session.get.side_effect = [
+            mock_metadata_response,
+            mock_content_response,
+        ]
+        with pytest.raises(ValueError, match="Invalid return_type. Must be 'bytes' or 'text'."):
+            self.files_api.get_file_content(123, max_file_size_bytes=2048, return_type="invalid")
+
+    def test_get_sql_schemas(self):
+        """Test get_sql_schemas method correctly processes API data."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "tables": [
+                {
+                    "name": "history_items",
+                    "columns": [
+                        {"name": "id", "type": "INTEGER"},
+                        {"name": "url", "type": "TEXT"},
+                    ],
+                }
+            ]
+        }
+        self.files_api.api_client.session.get.return_value = mock_response
+        result = self.files_api.get_sql_schemas(123)
+        assert "history_items" in [table["name"] for table in result["tables"]]
+
+    def test_run_sql_query(self):
+        """Test run_sql_query method."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "columns": ["id", "url"],
+            "rows": [[1, "http://example.com"], [2, "http://test.com"]],
+        }
+        self.files_api.api_client.session.post.return_value = mock_response
+        query = "SELECT * FROM history_items LIMIT 2;"
+        result = self.files_api.run_sql_query(123, query)
+        assert result == {
+            "columns": ["id", "url"],
+            "rows": [[1, "http://example.com"], [2, "http://test.com"]],
+        }
+        self.files_api.api_client.session.post.assert_called_once_with(
+            "https://api.example.com/api/v1/files/123/sql/query/", json={"query": query}
+        )

@@ -64,6 +64,7 @@ class FilesAPI:
 
         Raises:
             RuntimeError: If the file is too large to download.
+            ValueError: If the return_type is not "bytes" or "text".
         """
         # Guard against large files as this will read the entire file into memory.
         # If downloading larger files than 100MB is needed, use the download_file method instead.
@@ -78,7 +79,10 @@ class FilesAPI:
         response.raise_for_status()
         if return_type == "text":
             return response.text
-        return response.content
+        elif return_type == "bytes":
+            return response.content
+        else:
+            raise ValueError("Invalid return_type. Must be 'bytes' or 'text'.")
 
     def download_file(self, file_id: int, filename: str) -> str | None:
         """Downloads a file from OpenRelik.
@@ -182,3 +186,31 @@ class FilesAPI:
                 file_id = response.json().get("id")
 
         return file_id
+
+    def get_sql_schemas(self, file_id: int) -> dict[str, Any]:
+        """Retrieve tables and schemas for a supported SQL file.
+
+        Args:
+            file_id: The ID of the file to run the query against.
+
+        Returns:
+            A dictionary containing the results.
+        """
+        endpoint = f"{self.api_client.base_url}/files/{file_id}/sql/schemas/"
+        response = self.api_client.session.get(endpoint)
+        return response.json()
+
+    def run_sql_query(self, file_id: int, query: str) -> dict[str, Any]:
+        """Runs a SQL query against a supported SQL file.
+
+        Args:
+            file_id: The ID of the file to run the query against.
+            query: The SQL query to run.
+
+        Returns:
+            A dictionary containing the query results.
+        """
+        endpoint = f"{self.api_client.base_url}/files/{file_id}/sql/query/"
+        request_body = {"query": query}
+        response = self.api_client.session.post(endpoint, json=request_body)
+        return response.json()
