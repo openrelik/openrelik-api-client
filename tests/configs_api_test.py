@@ -38,4 +38,7 @@ class TestAPIClient:
 
         config = self.configs_api.get_system_config()
         mock_response.raise_for_status.assert_called_once()
+        self.configs_api.api_client.session.get.assert_called_once_with(
+            f"{self.api_client.base_url}/configs/system/"
+        )
         assert config == {"config": "value"}

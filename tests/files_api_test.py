@@ -50,7 +50,7 @@ class TestAPIClient:
         result = self.files_api.download_file(123, "test_file.txt")
 
         self.files_api.api_client.session.get.assert_called_once_with(
-            "https://api.example.com/api/v1/files/123/download"
+            f"{self.api_client.base_url}/files/123/download"
         )
         mock_response.raise_for_status.assert_called_once()
         mock_file.write.assert_called_once_with(b"file content")
@@ -75,7 +75,7 @@ class TestAPIClient:
         result = self.files_api.download_file(123, "test_file.txt")
 
         self.files_api.api_client.session.get.assert_called_once_with(
-            "https://api.example.com/api/v1/files/123/download"
+            f"{self.api_client.base_url}/files/123/download"
         )
         mock_splitext.assert_called_once_with("test_file.txt")
         mock_response.raise_for_status.assert_called_once()
@@ -124,7 +124,7 @@ class TestAPIClient:
 
         assert result == 456
         self.files_api.api_client.session.get.assert_called_once_with(
-            "https://api.example.com/api/v1/folders/789"
+            f"{self.api_client.base_url}/folders/789"
         )
         assert self.files_api.api_client.session.post.call_count == 2  # Two chunks
 
@@ -160,7 +160,7 @@ class TestAPIClient:
 
         assert result is None
         self.files_api.api_client.session.get.assert_called_once_with(
-            "https://api.example.com/api/v1/folders/999"
+            f"{self.api_client.base_url}/folders/999"
         )
 
     def test_get_file_metadata(self):
@@ -187,7 +187,7 @@ class TestAPIClient:
         }
 
         self.files_api.api_client.session.get.assert_called_once_with(
-            "https://api.example.com/api/v1/files/123/"
+            f"{self.api_client.base_url}/files/123/"
         )
 
     def test_get_file_content_success(self):
@@ -205,7 +205,7 @@ class TestAPIClient:
         assert result == b"file content"
         assert self.files_api.api_client.session.get.call_count == 2
         self.files_api.api_client.session.get.assert_any_call(
-            "https://api.example.com/api/v1/files/123/download_stream"
+            f"{self.api_client.base_url}/files/123/download_stream"
         )
         mock_content_response.raise_for_status.assert_called_once()
 
@@ -266,5 +266,5 @@ class TestAPIClient:
             "rows": [[1, "http://example.com"], [2, "http://test.com"]],
         }
         self.files_api.api_client.session.post.assert_called_once_with(
-            "https://api.example.com/api/v1/files/123/sql/query/", json={"query": query}
+            f"{self.api_client.base_url}/files/123/sql/query/", json={"query": query}
         )
