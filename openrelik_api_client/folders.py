@@ -22,6 +22,21 @@ class FoldersAPI:
         super().__init__()
         self.api_client = api_client
 
+    def list_root_folders(self, limit: int) -> list[dict[str, Any]]:
+        """List root folders.
+
+        Returns:
+            A list of dictionaries containing folder metadata.
+
+        Raises:
+            HTTPError: If the API request failed.
+        """
+        endpoint = f"{self.api_client.base_url}/folders/all/?page_size={limit}"
+        response = self.api_client.session.get(endpoint)
+        response.raise_for_status()
+        folders = response.json().get("folders", [])
+        return folders
+
     def list_folder(self, folder_id: int) -> list[dict[str, Any]]:
         """List files in a folder.
 
