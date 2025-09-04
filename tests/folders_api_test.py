@@ -40,7 +40,10 @@ class TestFoldersAPI:
             "folders": [
                 {"id": 1, "name": "Folder1"},
                 {"id": 2, "name": "Folder2"},
-            ]
+            ],
+            "page": 1,
+            "page_size": 2,
+            "total_count": 2,
         }
         self.api_client.session.get.return_value = mock_response
 
@@ -50,6 +53,32 @@ class TestFoldersAPI:
         # Verify
         mock_response.raise_for_status.assert_called_once()
         assert result == [{"id": 1, "name": "Folder1"}, {"id": 2, "name": "Folder2"}]
+        self.api_client.session.get.assert_called_once_with(
+            f"{self.api_client.base_url}/folders/all/?page_size=10"
+        )
+
+    def test_list_root_folders_with_pagination(self):
+        """Test list_root_folders method with pagination metadata."""
+        # Setup
+        payload = {
+            "folders": [
+                {"id": 1, "name": "Folder1"},
+                {"id": 2, "name": "Folder2"},
+            ],
+            "page": 1,
+            "page_size": 2,
+            "total_count": 2,
+        }
+        mock_response = MagicMock()
+        mock_response.json.return_value = payload
+        self.api_client.session.get.return_value = mock_response
+
+        # Execute
+        result = self.folders_api.list_root_folders(limit=10, pagination_metadata=True)
+
+        # Verify
+        mock_response.raise_for_status.assert_called_once()
+        assert result == payload
         self.api_client.session.get.assert_called_once_with(
             f"{self.api_client.base_url}/folders/all/?page_size=10"
         )

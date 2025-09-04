@@ -22,8 +22,14 @@ class FoldersAPI:
         super().__init__()
         self.api_client = api_client
 
-    def list_root_folders(self, limit: int) -> list[dict[str, Any]]:
+    def list_root_folders(
+        self, limit: int, pagination_metadata: bool = False
+    ) -> list[dict[str, Any]]:
         """List root folders.
+
+        Args:
+            limit: Maximum number of folders to return.
+            pagination_metadata: If True, include pagination metadata in the response.
 
         Returns:
             A list of dictionaries containing folder metadata.
@@ -34,7 +40,10 @@ class FoldersAPI:
         endpoint = f"{self.api_client.base_url}/folders/all/?page_size={limit}"
         response = self.api_client.session.get(endpoint)
         response.raise_for_status()
-        folders = response.json().get("folders", [])
+        if pagination_metadata:
+            folders = response.json()
+        else:
+            folders = response.json().get("folders", [])
         return folders
 
     def list_folder(self, folder_id: int) -> list[dict[str, Any]]:
