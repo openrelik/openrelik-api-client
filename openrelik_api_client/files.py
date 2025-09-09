@@ -17,7 +17,7 @@ import os
 import tempfile
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from requests_toolbelt import MultipartEncoder
@@ -30,6 +30,59 @@ class FilesAPI:
     def __init__(self, api_client: "APIClient"):
         super().__init__()
         self.api_client = api_client
+
+    def get_file_metadata(self, file_id: int) -> dict[str, Any]:
+        """Reads a file metadata.
+
+        Args:
+            file_id: The ID of the file to get the metadata from.
+
+        Returns:
+            A dictionary containing file metadata.
+
+        Raises:
+            HTTPError: If the API request failed.
+        """
+        endpoint = f"{self.api_client.base_url}/files/{file_id}/"
+        response = self.api_client.session.get(endpoint)
+        response.raise_for_status()
+        return response.json()
+
+    def get_file_content(
+        self, file_id: int, max_file_size_bytes: int, return_type: str = "bytes"
+    ) -> str | bytes | None:
+        """Download the content of a file.
+
+        Args:
+            file_id: The ID of the file to download.
+            max_file_size_bytes: Maximum file size to download in bytes.
+            return_type: The type of content to return. Can be "bytes" or "text".
+
+        Returns:
+            The content of the file as bytes if return_type is "bytes", or as a string if
+            return_type is "text". Returns None if the file does not exist.
+
+        Raises:
+            RuntimeError: If the file is too large to download.
+            ValueError: If the return_type is not "bytes" or "text".
+        """
+        # Guard against large files as this will read the entire file into memory.
+        # If downloading larger files than 100MB is needed, use the download_file method instead.
+        MAX_FILE_SIZE_GUARD = 100 * 1024 * 1024  # 100 MB
+
+        filesize = self.get_file_metadata(file_id).get("filesize")
+        if filesize > max_file_size_bytes or filesize > MAX_FILE_SIZE_GUARD:
+            raise RuntimeError("File too large to download")
+
+        endpoint = f"{self.api_client.base_url}/files/{file_id}/download_stream"
+        response = self.api_client.session.get(endpoint)
+        response.raise_for_status()
+        if return_type == "text":
+            return response.text
+        elif return_type == "bytes":
+            return response.content
+        else:
+            raise ValueError("Invalid return_type. Must be 'bytes' or 'text'.")
 
     def download_file(self, file_id: int, filename: str) -> str | None:
         """Downloads a file from OpenRelik.
@@ -133,3 +186,31 @@ class FilesAPI:
                 file_id = response.json().get("id")
 
         return file_id
+
+    def get_sql_schemas(self, file_id: int) -> dict[str, Any]:
+        """Retrieve tables and schemas for a supported SQL file.
+
+        Args:
+            file_id: The ID of the file to run the query against.
+
+        Returns:
+            A dictionary containing the results.
+        """
+        endpoint = f"{self.api_client.base_url}/files/{file_id}/sql/schemas/"
+        response = self.api_client.session.get(endpoint)
+        return response.json()
+
+    def run_sql_query(self, file_id: int, query: str) -> dict[str, Any]:
+        """Runs a SQL query against a supported SQL file.
+
+        Args:
+            file_id: The ID of the file to run the query against.
+            query: The SQL query to run.
+
+        Returns:
+            A dictionary containing the query results.
+        """
+        endpoint = f"{self.api_client.base_url}/files/{file_id}/sql/query/"
+        request_body = {"query": query}
+        response = self.api_client.session.post(endpoint, json=request_body)
+        return response.json()
