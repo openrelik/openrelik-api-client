@@ -25,7 +25,7 @@ class WorkflowsAPI:
         self.folders_url = f"{self.api_client.base_url}/folders"
 
     def create_workflow(
-        self, folder_id: int, file_ids: list, template_id: int = None
+        self, folder_id: int, file_ids: list, template_id: int = None, template_params: dict = {}
     ) -> int | None:
         """Creates a new workflow.
 
@@ -46,6 +46,7 @@ class WorkflowsAPI:
             "folder_id": folder_id,
             "file_ids": file_ids,
             "template_id": template_id,
+            "template_params": template_params,
         }
         response = self.api_client.session.post(endpoint, json=data)
         response.raise_for_status()
