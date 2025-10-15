@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2024-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -158,3 +158,21 @@ class WorkflowsAPI:
         if response.status_code == 200:
             workflow = response.json()
         return workflow
+
+    def get_workflow_report(self, workflow_id: int) -> dict[str, Any] | None:
+        """Retrieves a workflow report.
+
+        Args:
+            workflow_id: The ID of the workflow to retrieve the report from.
+
+        Returns:
+            The workflow report data.
+
+         Raises:
+            HTTPError: If the API request failed.
+        """
+        endpoint = f"{self.api_client.base_url}/workflows/{workflow_id}/report/"
+        response = self.api_client.session.get(endpoint)
+        response.raise_for_status()
+        if response.status_code == 200:
+            return response.json()
