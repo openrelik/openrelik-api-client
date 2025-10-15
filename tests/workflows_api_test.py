@@ -18,7 +18,7 @@ from openrelik_api_client.api_client import APIClient, TokenRefreshSession
 from openrelik_api_client.workflows import WorkflowsAPI
 
 
-class TestWorkflowAPI:
+class TestWorkflowsAPI:
     def setup_method(self):
         """Set up test fixtures."""
         self.api_client = MagicMock(spec=APIClient)
@@ -30,38 +30,35 @@ class TestWorkflowAPI:
         """Test initialization."""
         assert self.workflows_api.api_client == self.api_client
 
-    def test_create_workflow_reports(self):
-        """Test create_workflow_reports method."""
+    def test_get_workflow_report(self):
+        """Test get_workflow_report method."""
+        workflow_id = 123
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        expected_report = {"id": workflow_id, "status": "completed", "data": {}}
+        mock_response.json.return_value = expected_report
+        self.api_client.session.get.return_value = mock_response
 
-        def test_get_workflow_report(self):
-            """Test get_workflow_report method."""
-            workflow_id = 123
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            expected_report = {"id": workflow_id, "status": "completed", "data": {}}
-            mock_response.json.return_value = expected_report
-            self.api_client.session.get.return_value = mock_response
+        report = self.workflows_api.get_workflow_report(workflow_id)
 
-            report = self.workflows_api.get_workflow_report(workflow_id)
+        self.api_client.session.get.assert_called_once_with(
+            f"{self.api_client.base_url}/workflows/{workflow_id}/report/"
+        )
+        mock_response.raise_for_status.assert_called_once()
+        assert report == expected_report
 
-            self.api_client.session.get.assert_called_once_with(
-                f"{self.api_client.base_url}/workflows/{workflow_id}/report/"
-            )
-            mock_response.raise_for_status.assert_called_once()
-            assert report == expected_report
+    def test_get_workflow_report_no_content(self):
+        """Test get_workflow_report method when no content is returned."""
+        workflow_id = 456
+        mock_response = MagicMock()
+        mock_response.status_code = 204
+        self.api_client.session.get.return_value = mock_response
 
-        def test_get_workflow_report_no_content(self):
-            """Test get_workflow_report method when no content is returned."""
-            workflow_id = 456
-            mock_response = MagicMock()
-            mock_response.status_code = 204
-            self.api_client.session.get.return_value = mock_response
+        report = self.workflows_api.get_workflow_report(workflow_id)
 
-            report = self.workflows_api.get_workflow_report(workflow_id)
-
-            self.api_client.session.get.assert_called_once_with(
-                f"{self.api_client.base_url}/workflows/{workflow_id}/report/"
-            )
-            mock_response.raise_for_status.assert_called_once()
-            mock_response.json.assert_not_called()
-            assert report is None
+        self.api_client.session.get.assert_called_once_with(
+            f"{self.api_client.base_url}/workflows/{workflow_id}/report/"
+        )
+        mock_response.raise_for_status.assert_called_once()
+        mock_response.json.assert_not_called()
+        assert report is None
