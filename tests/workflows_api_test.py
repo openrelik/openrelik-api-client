@@ -62,3 +62,22 @@ class TestWorkflowsAPI:
         mock_response.raise_for_status.assert_called_once()
         mock_response.json.assert_not_called()
         assert report is None
+
+    def test_get_workflow_templates(self):
+        """Test get_workflow_templates method."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        expected_templates = [
+            {"id": 1, "name": "Template 1"},
+            {"id": 2, "name": "Template 2"},
+        ]
+        mock_response.json.return_value = expected_templates
+        self.api_client.session.get.return_value = mock_response
+
+        templates = self.workflows_api.get_workflow_templates()
+
+        self.api_client.session.get.assert_called_once_with(
+            f"{self.api_client.base_url}/workflows/templates/"
+        )
+        mock_response.raise_for_status.assert_called_once()
+        assert templates == expected_templates
