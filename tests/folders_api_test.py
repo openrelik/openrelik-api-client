@@ -103,6 +103,26 @@ class TestFoldersAPI:
             f"{self.api_client.base_url}/folders/123/files/"
         )
 
+    def test_list_subfolders(self):
+        """Test list_subfolders method."""
+        # Setup
+        mock_response = MagicMock()
+        mock_response.json.return_value = [
+            {"id": 10, "name": "Subfolder1"},
+            {"id": 20, "name": "Subfolder2"},
+        ]
+        self.api_client.session.get.return_value = mock_response
+
+        # Execute
+        result = self.folders_api.list_subfolders(123)
+
+        # Verify
+        mock_response.raise_for_status.assert_called_once()
+        assert result == [{"id": 10, "name": "Subfolder1"}, {"id": 20, "name": "Subfolder2"}]
+        self.api_client.session.get.assert_called_once_with(
+            f"{self.api_client.base_url}/folders/123/folders/"
+        )
+
     def test_create_root_folder(self):
         """Test create_root_folder method."""
         # Setup
