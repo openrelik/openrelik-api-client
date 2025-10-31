@@ -80,7 +80,7 @@ class TestAPIClient:
         mock_splitext.assert_called_once_with("test_file.txt")
         mock_response.raise_for_status.assert_called_once()
         mock_temp_file.assert_called_once_with(
-            mode="wb", prefix="test_file", suffix=".txt", delete=False
+            mode="wb", prefix="test_file", suffix=".txt", delete=False, dir=None
         )
         mock_file.write.assert_called_once_with(b"file content")
         assert result == "/tmp/test_file.txt"
