@@ -1,20 +1,23 @@
-[tool.poetry]
+[project]
 name = "openrelik-api-client"
 version = "0.5.0"
 description = "API client that automatically handles token refresh"
-authors = ["Johan Berggren <jberggren@gmail.com>"]
+authors = [{name = "Johan Berggren", email = "jberggren@gmail.com"}]
+license = {text = "Apache-2.0"}
 readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.32.3,<3.0.0",
+    "requests-toolbelt>=1.0.0,<2.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-requests = "^2.32.3"
-requests_toolbelt = "^1.0.0"
-
-[tool.poetry.group.dev.dependencies]
-pylint = "^3.1.0"
-pytest = "^8.0.2"
-pytest-mock = "^3.14.0"
-pytest-cov = "^6.0.0"
+[dependency-groups]
+dev = [
+    "pylint>=3.1.0,<4.0.0",
+    "pytest>=8.0.2,<9.0.0",
+    "pytest-mock>=3.14.0,<4.0.0",
+    "pytest-cov>=6.0.0,<7.0.0",
+]
 
 [tool.pytest.ini_options]
 python_files = "*_test.py"
@@ -22,5 +25,5 @@ python_classes = "Test*"
 python_functions = "test_*"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
