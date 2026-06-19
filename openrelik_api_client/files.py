@@ -84,12 +84,14 @@ class FilesAPI:
         else:
             raise ValueError("Invalid return_type. Must be 'bytes' or 'text'.")
 
-    def download_file(self, file_id: int, filename: str) -> str | None:
+    def download_file(self, file_id: int, filename: str, output_dir: str = None) -> str | None:
         """Downloads a file from OpenRelik.
 
         Args:
             file_id: The ID of the file to download.
             filename: The name of the file to download.
+            output_dir: The directory to save the downloaded file. If None, a temporary
+                directory will be used.
 
         Returns:
             str: The path to the downloaded file.
@@ -99,7 +101,7 @@ class FilesAPI:
         response.raise_for_status()
         filename_prefix, extension = os.path.splitext(filename)
         file = tempfile.NamedTemporaryFile(
-            mode="wb", prefix=f"{filename_prefix}", suffix=extension, delete=False
+            mode="wb", prefix=f"{filename_prefix}", suffix=extension, delete=False, dir=output_dir
         )
         file.write(response.content)
         file.close()

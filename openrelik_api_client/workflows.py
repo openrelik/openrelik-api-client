@@ -176,3 +176,18 @@ class WorkflowsAPI:
         response.raise_for_status()
         if response.status_code == 200:
             return response.json()
+
+    def get_workflow_templates(self) -> dict[str, Any] | None:
+        """Retrieves all available workflow templates.
+
+        Returns:
+            List of workflow templates.
+
+         Raises:
+            HTTPError: If the API request failed.
+        """
+        endpoint = f"{self.api_client.base_url}/workflows/templates/"
+        response = self.api_client.session.get(endpoint)
+        response.raise_for_status()
+        if response.status_code == 200:
+            return response.json()
